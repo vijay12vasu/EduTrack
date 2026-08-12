@@ -2,19 +2,9 @@ spring:
   application:
     name: user-service
 
-  datasource:
-    url: jdbc:mysql://localhost:3306/edutrack
-    username: root
-    password: root
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/edutrack
 
 server:
   port: 8081
@@ -32,4 +22,4 @@ management:
 
 app:
   jwt:
-    secret: edutrack-dev-secret-key-change-me-before-prod-32bytes
+    secret: "edutrack-dev-secret-key-change-me-before-prod-32bytes"

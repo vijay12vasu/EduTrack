@@ -2,7 +2,6 @@ package com.edutrack.userservice.service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.edutrack.userservice.domain.Role;
 import com.edutrack.userservice.domain.User;
@@ -22,22 +21,24 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService) {
+
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
-    @Transactional
     public AuthResponse register(RegisterRequest request) {
+
         String normalizedEmail = request.email().trim().toLowerCase();
 
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new EmailAlreadyExistsException(normalizedEmail);
         }
 
-        // Public registration is STUDENT-only; FACULTY/ADMIN are provisioned
-        // separately and never accepted from this endpoint.
         User user = User.builder()
                 .fullName(request.fullName().trim())
                 .email(normalizedEmail)
@@ -46,17 +47,21 @@ public class AuthService {
                 .build();
 
         User saved = userRepository.save(user);
+
         return issueAuthResponse(saved);
     }
 
-    @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
+
         String normalizedEmail = request.email().trim().toLowerCase();
 
         User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(InvalidCredentialsException::new);
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(
+                request.password(),
+                user.getPasswordHash())) {
+
             throw new InvalidCredentialsException();
         }
 
@@ -64,7 +69,13 @@ public class AuthService {
     }
 
     private AuthResponse issueAuthResponse(User user) {
+
         String token = jwtService.generateAccessToken(user);
-        return AuthResponse.of(token, jwtService.getAccessTokenExpirationSeconds(), UserResponse.from(user));
+
+        return AuthResponse.of(
+                token,
+                jwtService.getAccessTokenExpirationSeconds(),
+                UserResponse.from(user)
+        );
     }
 }
