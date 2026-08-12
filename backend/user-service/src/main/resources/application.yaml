@@ -23,3 +23,4 @@ management:
 app:
   jwt:
     secret: edutrack-dev-secret-key-change-me-before-prod-32bytes
+    access-token-expiration-ms: 86400000

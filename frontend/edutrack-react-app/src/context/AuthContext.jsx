@@ -3,10 +3,7 @@ import { USERS } from '../data/dummyData'
 
 const AuthContext = createContext(null)
 
-// Demo-only role detection: since there is no backend, we infer which
-// dashboard to show from the email the person types in. Any email
-// containing "admin", "faculty" / "staff", or "employer" / "recruiter"
-// logs into that role's dashboard; everything else logs in as a student.
+// Demo-only fallback role detection
 function detectRole(email = '') {
   const e = email.toLowerCase()
   if (e.includes('admin')) return 'admin'
@@ -17,18 +14,37 @@ function detectRole(email = '') {
 
 export function AuthProvider({ children }) {
   const [role, setRole] = useState(null)
+  const [token, setToken] = useState(null)
 
-  const login = (email) => {
-    const detected = detectRole(email)
-    setRole(detected)
-    return detected
+  const login = async (email, password = 'Test@123') => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      if (!res.ok) throw new Error('Login failed')
+      const data = await res.json()
+      setToken(data.accessToken)
+      const r = data.user.role.toLowerCase()
+      setRole(r)
+      return r
+    } catch (e) {
+      console.error(e)
+      const detected = detectRole(email)
+      setRole(detected)
+      return detected
+    }
   }
 
-  const logout = () => setRole(null)
+  const logout = () => {
+    setRole(null)
+    setToken(null)
+  }
 
   const user = role ? USERS[role] : null
 
-  const value = useMemo(() => ({ role, user, login, logout }), [role, user])
+  const value = useMemo(() => ({ role, user, token, login, logout }), [role, user, token])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

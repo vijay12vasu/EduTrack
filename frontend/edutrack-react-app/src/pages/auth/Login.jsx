@@ -18,9 +18,9 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const role = login(email || 'student@example.com')
+    const role = await login(email || 'student@example.com', password)
     navigate(ROLE_DASHBOARD_PATH[role])
   }
 
