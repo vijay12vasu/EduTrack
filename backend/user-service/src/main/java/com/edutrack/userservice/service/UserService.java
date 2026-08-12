@@ -19,14 +19,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponse getCurrentUser(String userId) {
-        Long id;
-        try {
-            id = Long.valueOf(userId);
-        } catch (NumberFormatException ex) {
-            throw new UserNotFoundException(userId);
-        }
-
-        User user = userRepository.findById(id)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         return UserResponse.from(user);

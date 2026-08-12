@@ -11,7 +11,7 @@ public record UserResponse(
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
-                String.valueOf(user.getId()),
+                user.getId(),
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole()
