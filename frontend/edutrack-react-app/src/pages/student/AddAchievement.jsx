@@ -110,13 +110,27 @@ export default function AddAchievement() {
               required
             />
 
-            <Input
-              label="Category"
-              placeholder="Workshop / Sports / Research / Certification"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-            />
+            <div>
+              <label className="block text-sm font-semibold text-slate-900 mb-1.5">Category *</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+                className="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all border"
+              >
+                <option value="" disabled hidden>Select Category ▼</option>
+                <option value="Sports">Sports</option>
+                <option value="Workshop">Workshop</option>
+                <option value="Certification">Certification</option>
+                <option value="Research">Research</option>
+                <option value="Competition">Competition</option>
+                <option value="Community Service">Community Service</option>
+                <option value="Cultural">Cultural</option>
+                <option value="Technical">Technical</option>
+                <option value="Leadership">Leadership</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
             <Input
               label="Activity Date"

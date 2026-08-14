@@ -21,7 +21,7 @@ import com.edutrack.activityservice.security.AuthenticatedUser;
 
 @RestController
 @RequestMapping("/api/activities/admin")
-@PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER', 'FACULTY')")
 @Tag(name = "Admin Activities", description = "Org-wide view over every activity record")
 public class AdminActivityController {
 

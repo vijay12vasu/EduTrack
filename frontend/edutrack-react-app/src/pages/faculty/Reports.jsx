@@ -20,9 +20,9 @@ export default function FacultyReports() {
   const total = reviewed.length
 
   const DEPARTMENT_VERIFICATION_SUMMARY = [
-    { label: 'Total Reviewed', progress: total > 0 ? 100 : 0, color: 'bg-blue-500' },
-    { label: 'Approved', progress: total > 0 ? Math.round((verified.length / total) * 100) : 0, color: 'bg-green-500' },
-    { label: 'Rejected', progress: total > 0 ? Math.round((rejected.length / total) * 100) : 0, color: 'bg-red-500' },
+    { label: 'Total Reviewed', value: total > 0 ? 100 : 0, color: 'bg-blue-500' },
+    { label: 'Approved', value: total > 0 ? Math.round((verified.length / total) * 100) : 0, color: 'bg-green-500' },
+    { label: 'Rejected', value: total > 0 ? Math.round((rejected.length / total) * 100) : 0, color: 'bg-red-500' },
   ]
 
   const handleGenerate = async () => {

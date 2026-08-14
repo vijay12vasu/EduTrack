@@ -52,6 +52,11 @@ public class AdminUserController {
         return ResponseEntity.ok(userService.getUsersByRole(Role.EMPLOYER));
     }
 
+    @GetMapping("/admins")
+    public ResponseEntity<List<UserResponse>> getAdmins() {
+        return ResponseEntity.ok(userService.getUsersByRole(Role.ADMIN));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody AdminCreateUserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request, passwordEncoder));
