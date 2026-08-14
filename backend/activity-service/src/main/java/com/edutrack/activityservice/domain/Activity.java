@@ -46,6 +46,7 @@ public class Activity {
     private String studentEmail;
 
     private String title;
+    @Indexed
     private String category;
     private LocalDate activityDate;
     private String description;
@@ -55,12 +56,14 @@ public class Activity {
      * storage service exists in this backend yet, so this is accepted as an
      * opaque string supplied by the client rather than a real upload.
      */
+    @Indexed
     private String certificateReference;
 
     @Indexed
     @Builder.Default
     private ActivityStatus status = ActivityStatus.PENDING;
 
+    @Indexed
     private String verifierId;
     private String verifierName;
 

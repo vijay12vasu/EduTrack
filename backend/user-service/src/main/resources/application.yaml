@@ -4,7 +4,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/edutrack
+      uri: mongodb://localhost:27017/test
 
 server:
   port: 8081
@@ -22,5 +22,5 @@ management:
 
 app:
   jwt:
-    secret: edutrack-dev-secret-key-change-me-before-prod-32bytes
+    secret: ${JWT_SECRET:this-is-a-very-long-secret-key-for-local-development-only-123456}
     access-token-expiration-ms: 86400000

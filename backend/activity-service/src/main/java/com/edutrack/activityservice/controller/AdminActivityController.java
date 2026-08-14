@@ -16,9 +16,12 @@ import com.edutrack.activityservice.service.ActivityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.edutrack.activityservice.security.AuthenticatedUser;
+
 @RestController
 @RequestMapping("/api/activities/admin")
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYER')")
 @Tag(name = "Admin Activities", description = "Org-wide view over every activity record")
 public class AdminActivityController {
 
@@ -32,11 +35,16 @@ public class AdminActivityController {
     @Operation(summary = "List all activity records, optionally filtered by status/category/studentId")
     public List<ActivityResponse> findAll(@RequestParam(required = false) ActivityStatus status,
                                            @RequestParam(required = false) String category,
-                                           @RequestParam(required = false) String studentId) {
+                                           @RequestParam(required = false) String studentId,
+                                           @AuthenticationPrincipal AuthenticatedUser user) {
+        if ("EMPLOYER".equals(user.role())) {
+            status = ActivityStatus.VERIFIED;
+        }
         return activityService.findAll(status, category, studentId).stream().map(ActivityResponse::from).toList();
     }
 
     @GetMapping("/summary")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Org-wide status counts (total/pending/verified/rejected)")
     public ActivitySummaryResponse summary() {
         return activityService.summarizeAll();

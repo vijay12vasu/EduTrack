@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { AchievementProvider } from './context/AchievementContext'
 import ProtectedRoute from './routes/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 import { ROLE_DASHBOARD_PATH } from './utils/nav'
 
 import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
 import ResetPassword from './pages/auth/ResetPassword'
 
 import StudentDashboard from './pages/student/Dashboard'
@@ -41,6 +44,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Student */}
@@ -79,10 +83,14 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <AchievementProvider>
+            <AppRoutes />
+          </AchievementProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

@@ -26,11 +26,21 @@ public class User {
 
     private String fullName;
 
+    @org.springframework.data.mongodb.core.index.Indexed(unique = true)
     private String email;
 
     private String passwordHash;
 
+    @org.springframework.data.mongodb.core.index.Indexed
     private Role role;
+
+    // Profile fields
+    private String department;
+    private String year;
+    private String mobile;
+    private String registerNumber;
+    private String facultyId;
+    private String company;
 
     @CreatedDate
     private Instant createdAt;

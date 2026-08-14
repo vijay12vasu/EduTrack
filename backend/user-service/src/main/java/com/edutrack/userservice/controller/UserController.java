@@ -24,4 +24,10 @@ public class UserController {
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal AuthenticatedUser principal) {
         return ResponseEntity.ok(userService.getCurrentUser(principal.id()));
     }
+
+    @org.springframework.web.bind.annotation.PutMapping("/me")
+    public ResponseEntity<UserResponse> updateMe(@AuthenticationPrincipal AuthenticatedUser principal,
+                                                 @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody com.edutrack.userservice.dto.request.UpdateProfileRequest request) {
+        return ResponseEntity.ok(userService.updateProfile(principal.id(), request));
+    }
 }

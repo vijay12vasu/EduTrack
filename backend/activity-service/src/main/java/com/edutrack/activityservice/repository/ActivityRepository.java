@@ -17,9 +17,13 @@ public interface ActivityRepository extends MongoRepository<Activity, String> {
 
     List<Activity> findByVerifierIdAndStatusIn(String verifierId, List<ActivityStatus> statuses);
 
+    List<Activity> findByVerifierIdAndStatus(String verifierId, ActivityStatus status);
+
     long countByStudentId(String studentId);
 
     long countByStudentIdAndStatus(String studentId, ActivityStatus status);
 
     long countByStatus(ActivityStatus status);
+
+    List<Activity> findByCertificateReference(String certificateReference);
 }
