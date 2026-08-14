@@ -33,7 +33,7 @@ export const NAV_BY_ROLE = {
   ],
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/admin/students', label: 'Students', icon: Users },
+    { to: '/admin/students', label: 'Users', icon: Users },
     { to: '/admin/activities', label: 'Activities', icon: Activity },
     { to: '/admin/verifications', label: 'Verifications', icon: CheckCircle2 },
     { to: '/admin/reports', label: 'Reports', icon: FileText },

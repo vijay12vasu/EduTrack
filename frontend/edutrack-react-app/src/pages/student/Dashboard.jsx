@@ -47,7 +47,7 @@ export default function StudentDashboard() {
   const DASHBOARD_PROGRESS_BY_CATEGORY = Object.keys(categoriesMap).map((cat, i) => {
      const count = categoriesMap[cat]
      const progress = Math.min(100, Math.round((count / Math.max(1, total)) * 100))
-     return { label: cat, progress, color: colors[i % colors.length] }
+     return { label: cat, value: progress, color: colors[i % colors.length] }
   })
 
   return (

@@ -34,6 +34,8 @@ import VerifiedProfiles from './pages/employer/VerifiedProfiles'
 import AboutEduTrack from './pages/employer/AboutEduTrack'
 import RecruiterProfile from './pages/employer/Profile'
 
+import SharedProfile from './pages/shared/Profile'
+
 function RootRedirect() {
   const { role } = useAuth()
   return <Navigate to={role ? ROLE_DASHBOARD_PATH[role] : '/login'} replace />
@@ -61,10 +63,12 @@ function AppRoutes() {
       <Route path="/faculty/verified-records" element={<ProtectedRoute allow={['faculty']}><VerifiedRecords /></ProtectedRoute>} />
       <Route path="/faculty/reports" element={<ProtectedRoute allow={['faculty']}><FacultyReports /></ProtectedRoute>} />
       <Route path="/faculty/profile" element={<ProtectedRoute allow={['faculty']}><FacultyProfile /></ProtectedRoute>} />
+      <Route path="/faculty/students/:id" element={<ProtectedRoute allow={['faculty']}><SharedProfile /></ProtectedRoute>} />
 
       {/* Admin */}
       <Route path="/admin/dashboard" element={<ProtectedRoute allow={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/students" element={<ProtectedRoute allow={['admin']}><ManageStudents /></ProtectedRoute>} />
+      <Route path="/admin/users/:id" element={<ProtectedRoute allow={['admin']}><SharedProfile /></ProtectedRoute>} />
       <Route path="/admin/activities" element={<ProtectedRoute allow={['admin']}><ManageActivities /></ProtectedRoute>} />
       <Route path="/admin/verifications" element={<ProtectedRoute allow={['admin']}><Verifications /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute allow={['admin']}><AdminReports /></ProtectedRoute>} />
@@ -73,6 +77,7 @@ function AppRoutes() {
       {/* Employer */}
       <Route path="/employer/verify-student" element={<ProtectedRoute allow={['employer']}><VerifyStudent /></ProtectedRoute>} />
       <Route path="/employer/verified-profiles" element={<ProtectedRoute allow={['employer']}><VerifiedProfiles /></ProtectedRoute>} />
+      <Route path="/employer/students/:id" element={<ProtectedRoute allow={['employer']}><SharedProfile /></ProtectedRoute>} />
       <Route path="/employer/about" element={<ProtectedRoute allow={['employer']}><AboutEduTrack /></ProtectedRoute>} />
       <Route path="/employer/profile" element={<ProtectedRoute allow={['employer']}><RecruiterProfile /></ProtectedRoute>} />
 

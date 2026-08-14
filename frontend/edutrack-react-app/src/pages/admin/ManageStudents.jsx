@@ -8,9 +8,12 @@ import Table, { Tr, Td } from '../../components/ui/Table'
 import { useAuth } from '../../context/AuthContext'
 import { ChevronDown } from 'lucide-react'
 
+import { useNavigate } from 'react-router-dom'
+
 const ROLES = ['STUDENT', 'FACULTY', 'ADMIN', 'EMPLOYER']
 
 export default function ManageStudents() {
+  const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -129,7 +132,7 @@ export default function ManageStudents() {
         {loading ? (
           <div className="text-center py-10 text-slate-400">Loading users...</div>
         ) : (
-          <Table columns={['Name', 'Email', 'Role']}>
+          <Table columns={['Name', 'Email', 'Role', 'Action']}>
             {users.map((s, i) => (
               <Tr key={s.id} striped={i % 2 === 1}>
                 <Td bold>{s.fullName}</Td>
@@ -139,11 +142,19 @@ export default function ManageStudents() {
                     {s.role}
                   </span>
                 </Td>
+                <Td>
+                  <button 
+                    onClick={() => navigate(`/admin/users/${s.id}`)}
+                    className="text-blue-600 hover:underline font-medium text-sm"
+                  >
+                    View
+                  </button>
+                </Td>
               </Tr>
             ))}
             {users.length === 0 && !error && (
               <Tr>
-                <Td colSpan={3} className="text-center py-10 text-slate-400">No users found.</Td>
+                <Td colSpan={4} className="text-center py-10 text-slate-400">No users found.</Td>
               </Tr>
             )}
           </Table>

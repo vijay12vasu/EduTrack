@@ -26,9 +26,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        throw new org.springframework.web.server.ResponseStatusException(
-            HttpStatus.FORBIDDEN, "Public registration is disabled. Please contact your administrator."
-        );
+        throw new org.springframework.security.access.AccessDeniedException("Public registration is disabled. Please contact your administrator.");
     }
 
     @PostMapping("/login")
