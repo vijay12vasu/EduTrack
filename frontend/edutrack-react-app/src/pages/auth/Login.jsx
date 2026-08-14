@@ -109,6 +109,12 @@ export default function Login() {
               <Link to="/reset-password" className="block text-sm font-medium text-slate-500 hover:underline">
                 Forgot password?
               </Link>
+              <div className="text-sm text-slate-500">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-semibold text-blue-600 hover:underline">
+                  Create an account
+                </Link>
+              </div>
             </div>
           </form>
         </div>
