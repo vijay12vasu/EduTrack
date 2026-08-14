@@ -2,6 +2,10 @@ spring:
   application:
     name: activity-service
 
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/test
+
 server:
   port: 8082
 
@@ -15,3 +19,17 @@ management:
     web:
       exposure:
         include: "*"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  jwt:
+    # MUST be the exact same secret configured in user-service, since this
+    # service only verifies signatures issued there — it never issues tokens.
+    # Override via env var in real deployments: JWT_SECRET must be a
+    # Base64 or plain string of at least 32 bytes for HS256.
+    secret: ${JWT_SECRET:this-is-a-very-long-secret-key-for-local-development-only-123456}

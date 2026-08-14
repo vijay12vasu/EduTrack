@@ -7,19 +7,26 @@ import Button from '../../components/ui/Button'
 import { useAchievements } from '../../context/AchievementContext'
 
 export default function AddAchievement() {
-  const { addAchievement } = useAchievements()
+  const { addAchievement, uploadFile } = useAchievements()
 
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('')
   const [date, setDate] = useState('')
   const [description, setDescription] = useState('')
+  const [fileObj, setFileObj] = useState(null)
   const [fileName, setFileName] = useState(null)
   const [submitted, setSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const handleDrop = (e) => {
     e.preventDefault()
     const file = e.dataTransfer.files?.[0]
-    if (file) setFileName(file.name)
+    if (file) {
+       setFileObj(file)
+       setFileName(file.name)
+       setError('')
+    }
   }
 
   const resetForm = () => {
@@ -27,31 +34,49 @@ export default function AddAchievement() {
     setCategory('')
     setDate('')
     setDescription('')
+    setFileObj(null)
     setFileName(null)
+    setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
 
-    if (!fileName) {
-      alert('Please upload a certificate before submitting.')
+    if (!fileObj) {
+      setError('Please upload a certificate before submitting.')
       return
     }
 
-    addAchievement({
-      title,
-      category,
-      date,
-      description,
-      certificate: fileName,
-    })
+    setIsSubmitting(true)
+    try {
+      // Step 1: Upload file to GridFS
+      const fileId = await uploadFile(fileObj)
+      if (!fileId) {
+        setError('Failed to upload certificate. Please try again.')
+        setIsSubmitting(false)
+        return
+      }
 
-    resetForm()
-    setSubmitted(true)
+      // Step 2: Create activity with real GridFS file ID
+      await addAchievement({
+        title,
+        category,
+        date,
+        description,
+        certificate: fileId,
+      })
 
-    setTimeout(() => {
-      setSubmitted(false)
-    }, 2500)
+      resetForm()
+      setSubmitted(true)
+      setTimeout(() => {
+        setSubmitted(false)
+      }, 3000)
+    } catch (err) {
+      setError(err.message || 'Failed to submit achievement. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -65,6 +90,18 @@ export default function AddAchievement() {
             className="lg:col-span-2 space-y-5"
             onSubmit={handleSubmit}
           >
+            {error && (
+              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            {submitted && (
+              <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
+                Achievement submitted successfully! It will appear as Pending until faculty verification.
+              </div>
+            )}
+
             <Input
               label="Activity Title"
               placeholder="Enter activity title"
@@ -83,7 +120,8 @@ export default function AddAchievement() {
 
             <Input
               label="Activity Date"
-              placeholder="DD-MM-YYYY"
+              type="date"
+              max={new Date().toISOString().split('T')[0]}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
@@ -112,20 +150,28 @@ export default function AddAchievement() {
                 <span className="text-sm font-semibold text-blue-600">
                   {fileName ?? 'Drag and drop PDF, JPG or PNG certificate here'}
                 </span>
+                <span className="text-xs text-slate-400">
+                  Max 10MB • PDF, JPG, PNG only
+                </span>
 
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   className="hidden"
-                  onChange={(e) =>
-                    setFileName(e.target.files?.[0]?.name ?? null)
-                  }
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      setFileObj(file)
+                      setFileName(file.name)
+                      setError('')
+                    }
+                  }}
                 />
               </label>
             </div>
 
-            <Button type="submit">
-              {submitted ? 'Submitted!' : 'Submit for Verification'}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Uploading & Submitting...' : submitted ? '✓ Submitted!' : 'Submit for Verification'}
             </Button>
           </form>
 
@@ -137,7 +183,7 @@ export default function AddAchievement() {
             <p className="text-sm text-slate-600 leading-relaxed">
               Upload clear proof documents. Faculty will check the certificate
               and approve only valid records. Verified achievements improve
-              your AI score.
+              your profile score.
             </p>
           </div>
         </div>

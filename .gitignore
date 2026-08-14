@@ -1,0 +1,26 @@
+# Test artifacts and logs
+*.pdf
+*.log
+scratch/
+test-results/
+playwright-report/
+
+# Env and secrets
+.env
+.env.*
+credentials
+*.key
+*.pem
+
+# Dependencies
+node_modules/
+venv/
+target/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store

@@ -15,13 +15,29 @@ const FEATURES = [
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const role = login(email || 'student@example.com')
-    navigate(ROLE_DASHBOARD_PATH[role])
+    setError('')
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter both email and password.')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const role = await login(email, password)
+      navigate(ROLE_DASHBOARD_PATH[role] || '/login')
+    } catch (err) {
+      setError(err.message || 'Login failed. Please check your credentials.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -61,6 +77,12 @@ export default function Login() {
           <h2 className="text-2xl font-extrabold text-slate-900 mb-1">Welcome Back!</h2>
           <p className="text-sm text-slate-500 mb-6">Login to your EduTrack account</p>
 
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email"
@@ -68,6 +90,7 @@ export default function Login() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
             <Input
               label="Password"
@@ -75,34 +98,19 @@ export default function Login() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
             />
 
-            <Button type="submit" className="w-full" size="lg">
-              Login
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
 
-            <div className="flex items-center gap-3 text-xs text-slate-400">
-              <span className="flex-1 h-px bg-slate-200" />
-              or
-              <span className="flex-1 h-px bg-slate-200" />
-            </div>
-
-            <Button type="button" variant="secondary" className="w-full" size="lg">
-              <span className="font-bold text-blue-600">G</span>
-              Continue with Google
-            </Button>
-
-            <div className="text-center">
-              <Link to="/reset-password" className="text-sm font-medium text-blue-600 hover:underline">
+            <div className="text-center space-y-2 pt-4">
+              <Link to="/reset-password" className="block text-sm font-medium text-slate-500 hover:underline">
                 Forgot password?
               </Link>
             </div>
           </form>
-
-          <p className="mt-6 text-center text-xs text-slate-400">
-            Demo build — email containing "admin", "faculty" or "employer" signs you into
-            that role's dashboard; any other email signs you in as a student.
-          </p>
         </div>
       </div>
     </div>

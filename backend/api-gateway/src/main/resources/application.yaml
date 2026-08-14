@@ -1,6 +1,33 @@
 spring:
   application:
     name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+          routes:
+            - id: user-service-auth
+              uri: lb://user-service
+              predicates:
+                - Path=/api/auth/**
+            - id: user-service-users
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/**
+            - id: activity-service-activities
+              uri: lb://activity-service
+              predicates:
+                - Path=/api/activities/**
+            - id: activity-service-files
+              uri: lb://activity-service
+              predicates:
+                - Path=/api/files/**
 
 server:
   port: 8080
@@ -9,3 +36,9 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
