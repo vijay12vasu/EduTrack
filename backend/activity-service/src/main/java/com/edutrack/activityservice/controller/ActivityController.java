@@ -82,7 +82,7 @@ public class ActivityController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_STUDENT')")
-    @Operation(summary = "Edit an activity the current student submitted, while it is still PENDING")
+    @Operation(summary = "Edit a PENDING or REJECTED activity (resubmitting a REJECTED activity resets it to PENDING)")
     public ActivityResponse update(@PathVariable String id,
                                     @Valid @RequestBody UpdateActivityRequest request,
                                     @AuthenticationPrincipal AuthenticatedUser student) {

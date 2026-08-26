@@ -75,4 +75,7 @@ public class Activity {
 
     @LastModifiedDate
     private Instant updatedAt;
+
+    @Builder.Default
+    private java.util.List<ActivityEvent> history = new java.util.ArrayList<>();
 }

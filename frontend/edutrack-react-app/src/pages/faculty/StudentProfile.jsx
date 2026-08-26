@@ -90,24 +90,24 @@ export default function FacultyStudentProfile() {
 
       <div className="grid lg:grid-cols-3 gap-6 mb-6">
         <Card className="p-6 lg:col-span-2">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Profile Information</h3>
+     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Profile Information</h3>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Name" value={student.fullName} readOnly className="bg-slate-50" />
-            <Input label="Email" value={student.email} readOnly className="bg-slate-50" />
-            <Input label="Role" value={student.role} readOnly className="bg-slate-50" />
-            <Input label="Register Number" value={student.registerNumber || '—'} readOnly className="bg-slate-50" />
-            <Input label="Department" value={student.department || '—'} readOnly className="bg-slate-50" />
-            <Input label="Year" value={student.year || '—'} readOnly className="bg-slate-50" />
+      <Input label="Name" value={student.fullName} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
+      <Input label="Email" value={student.email} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
+      <Input label="Role" value={student.role} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
+      <Input label="Register Number" value={student.registerNumber || '—'} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
+      <Input label="Department" value={student.department || '—'} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
+      <Input label="Year" value={student.year || '—'} readOnly className="bg-slate-50 dark:bg-slate-900/50 " />
           </div>
         </Card>
 
         <Card className="p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">AI Score</h3>
+     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">AI Score</h3>
           {aiScore ? (
             <div className="flex flex-col items-center justify-center py-4">
               <div className="text-5xl font-extrabold text-blue-600 mb-2">{aiScore.score}</div>
-              <div className="text-sm text-slate-500 font-medium">Out of 100</div>
-              <p className="mt-4 text-sm text-slate-600 text-center leading-relaxed">
+       <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">Out of 100</div>
+       <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 text-center leading-relaxed">
                 {aiScore.summary}
               </p>
             </div>
@@ -120,22 +120,22 @@ export default function FacultyStudentProfile() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-500">Verified</span>
+  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between">
+     <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 ">Verified</span>
           <span className="text-2xl font-bold text-green-600">{verified.length}</span>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-500">Pending</span>
+  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between">
+     <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 ">Pending</span>
           <span className="text-2xl font-bold text-amber-500">{pending.length}</span>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-500">Rejected</span>
+  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm flex items-center justify-between">
+     <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 ">Rejected</span>
           <span className="text-2xl font-bold text-red-600">{rejected.length}</span>
         </div>
       </div>
 
       <Card className="p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">Achievement History</h3>
+    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Achievement History</h3>
         {activities.length === 0 ? (
           <div className="text-center py-10 text-slate-400">
             No activities submitted by this student.

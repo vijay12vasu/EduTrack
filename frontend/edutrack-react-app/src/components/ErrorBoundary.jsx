@@ -22,13 +22,13 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center p-4">
+   <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 max-w-md w-full text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <span className="text-red-500 text-3xl font-bold">!</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Something went wrong</h1>
-            <p className="text-slate-500 mb-8">
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Something went wrong</h1>
+      <p className="text-slate-500 dark:text-slate-400 mb-8">
               We encountered an unexpected error while loading this page. 
               Please try reloading the application.
             </p>

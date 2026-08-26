@@ -1,28 +1,59 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Trophy, BadgeCheck, Clock3, CircleX, Sparkles, Target, ArrowRight, BrainCircuit, Loader2, Info, Activity } from 'lucide-react'
 import DashboardLayout from '../../layouts/DashboardLayout'
-import Card from '../../components/ui/Card'
-import StatCard from '../../components/ui/StatCard'
 import Button from '../../components/ui/Button'
-import ProgressBar from '../../components/ui/ProgressBar'
-import Table, { Tr, Td } from '../../components/ui/Table'
+import Badge from '../../components/ui/Badge'
+import Skeleton from '../../components/ui/Skeleton'
 import { useAchievements } from '../../context/AchievementContext'
 import { useAuth } from '../../context/AuthContext'
 
 function formatDate(date) {
   const parsed = new Date(date)
   if (isNaN(parsed.getTime())) return date
-  return parsed.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-  })
+  return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function getGrowthLevel(score) {
+  if (score <= 20) return 'Explorer'
+  if (score <= 40) return 'Rising Star'
+  if (score <= 60) return 'Achiever'
+  if (score <= 80) return 'Excellence'
+  return 'Elite'
 }
 
 export default function StudentDashboard() {
   const navigate = useNavigate()
   const { achievements, loading: achLoading, token } = useAchievements()
   const { user } = useAuth()
-  // Calculate summary directly from the achievements array
+  
+  const [aiData, setAiData] = useState(null)
+  const [aiLoading, setAiLoading] = useState(true)
+  const [aiError, setAiError] = useState('')
+
+  useEffect(() => {
+    if (token) {
+      setAiLoading(true)
+      fetch('/api/activities/ai/score', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load AI data')
+        return res.json()
+      })
+      .then(data => {
+         setAiData(data)
+         setAiLoading(false)
+      })
+      .catch(e => {
+         setAiError(e.message)
+         setAiLoading(false)
+      })
+    }
+  }, [token])
+
+  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Student'
+  
   const summary = {
     total: achievements.length,
     pending: achievements.filter(a => a.status === 'Pending').length,
@@ -30,145 +61,388 @@ export default function StudentDashboard() {
     rejected: achievements.filter(a => a.status === 'Rejected').length
   }
   const summaryLoading = achLoading
+  const recent = [...achievements].slice(-5).reverse()
 
-  const recent = [...achievements].slice(-4).reverse()
-
-  const firstName = user?.fullName ? user.fullName.split(' ')[0] : 'Student'
-
-  // Compute actual categories from real data
-  const categoriesMap = {}
-  achievements.forEach(a => {
-    if (!categoriesMap[a.category]) categoriesMap[a.category] = 0
-    categoriesMap[a.category] += 1
-  })
-  
-  const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-amber-500', 'bg-pink-500']
-  const total = achievements.length
-  const DASHBOARD_PROGRESS_BY_CATEGORY = Object.keys(categoriesMap).map((cat, i) => {
-     const count = categoriesMap[cat]
-     const progress = Math.min(100, Math.round((count / Math.max(1, total)) * 100))
-     return { label: cat, value: progress, color: colors[i % colors.length] }
-  })
+  const headerAction = (
+    <Button onClick={() => navigate('/student/add-achievement')} className="shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+      + Log New Activity
+    </Button>
+  )
 
   return (
     <DashboardLayout
-      title={`Welcome back, ${firstName}!`}
-      subtitle="Here is your complete achievement overview"
+      title={`Welcome back, ${firstName}`}
+      subtitle={`Your intelligent growth overview for ${formatDate(new Date())}`}
+      action={headerAction}
     >
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="Total Activities"
-          value={summaryLoading ? '—' : summary.total}
-          icon="T"
-          color="blue"
-        />
-
-        <StatCard
-          label="Verified"
-          value={summaryLoading ? '—' : summary.verified}
-          icon="V"
-          color="green"
-        />
-
-        <StatCard
-          label="Pending"
-          value={summaryLoading ? '—' : summary.pending}
-          icon="P"
-          color="amber"
-        />
-
-        <StatCard
-          label="Rejected"
-          value={summaryLoading ? '—' : summary.rejected}
-          icon="R"
-          color="red"
-        />
+      {/* LEVEL 1: SIGNATURE EXPERIENCE (HERO) */}
+      <div className="relative w-full rounded-[2rem] overflow-hidden bg-gradient-to-br from-indigo-50/80 via-white to-violet-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/20 border border-indigo-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-500 mb-[clamp(2rem,5vh,3rem)] group">
+        {/* Ambient background shapes */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none transition-transform duration-1000 group-hover:scale-110"></div>
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-400/5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4 pointer-events-none"></div>
+        
+        {/* Refined gradient top accent */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-teal-400 opacity-80"></div>
+        
+        <div className="relative z-10 p-[clamp(2rem,5vh,4rem)] flex flex-col md:flex-row items-center gap-[clamp(2rem,5vw,5rem)]">
+          
+          {/* Left: Score Visualization */}
+          <div className="shrink-0 relative flex items-center justify-center">
+            {/* Soft ambient glow behind ring */}
+            <div className="absolute inset-0 bg-indigo-400/20 blur-2xl rounded-full scale-90"></div>
+            
+            {/* Decorative structural rings */}
+            <div className="absolute inset-0 border border-indigo-200/50 rounded-full scale-[1.12] transition-transform duration-700 group-hover:scale-[1.15]"></div>
+            <div className="absolute inset-0 border border-indigo-100/50 rounded-full scale-[1.25] border-dashed"></div>
+            
+            <svg className="w-[clamp(12rem,22vw,16rem)] h-[clamp(12rem,22vw,16rem)] transform -rotate-90 drop-shadow-md relative z-10" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-white drop-shadow-sm" />
+              <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-indigo-100/40" />
+              {!aiLoading && !aiError && aiData && (
+                <circle 
+                  cx="50" cy="50" r="42" stroke="url(#growthGradient)" strokeWidth="6" fill="transparent" 
+                  strokeDasharray="263.89" 
+                  strokeDashoffset={263.89 - (263.89 * aiData.overallScore) / 100}
+                  strokeLinecap="round"
+                  className="transition-all duration-[1.5s] ease-out drop-shadow-sm" 
+                />
+              )}
+              <defs>
+                <linearGradient id="growthGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#4f46e5" /> {/* indigo-600 */}
+                  <stop offset="50%" stopColor="#7c3aed" /> {/* violet-600 */}
+                  <stop offset="100%" stopColor="#0d9488" /> {/* teal-600 */}
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+              {aiLoading ? (
+                <Loader2 className="animate-spin text-indigo-500" size={36} />
+              ) : aiError || !aiData ? (
+                <span className="text-lg font-bold text-slate-300">N/A</span>
+              ) : (
+                <>
+         <span className="text-[clamp(2.5rem,5vw,3.5rem)] font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-1">
+                    {aiData.overallScore}
+                  </span>
+                  <span className="text-indigo-900/40 text-xs font-black tracking-[0.2em]">SCORE</span>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {/* Right: Growth Context */}
+          <div className="flex-1 text-center md:text-left">
+      <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-indigo-100/80 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-400 text-xs font-bold uppercase tracking-widest shadow-sm mb-5 transition-transform hover:-translate-y-0.5">
+              <Sparkles size={14} className="text-indigo-500" />
+              {aiLoading ? 'Analyzing Status...' : aiData ? `Status: ${getGrowthLevel(aiData.overallScore)}` : 'Analysis Pending'}
+            </div>
+      <h2 className="text-[clamp(2rem,4vw,2.75rem)] font-black mb-4 text-slate-900 dark:text-white tracking-tight leading-none">
+              Your Growth Profile
+            </h2>
+      <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed font-medium max-w-2xl mb-8">
+              {aiLoading ? (
+                <span className="animate-pulse">Compiling your achievement evidence into a personalized growth profile...</span>
+              ) : aiError ? (
+                <span className="text-rose-600">Unable to generate analysis. Please try again later.</span>
+              ) : aiData ? (
+                aiData.scoreExplanation || "Your growth analysis is dynamically calculated based on your recorded and verified achievements."
+              ) : (
+                "Upload and verify your achievements to unlock your personalized growth score."
+              )}
+            </p>
+            
+            {aiData && !aiLoading && !aiError && (
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-teal-800 bg-teal-50/80 px-4 py-2 rounded-xl border border-teal-200/60 shadow-sm transition-transform hover:-translate-y-0.5">
+                   <BadgeCheck size={18} className="text-teal-600"/> Verified Activity Focus
+                </div>
+                <div className="flex items-center gap-2 text-sm font-semibold text-indigo-800 bg-indigo-50/80 px-4 py-2 rounded-xl border border-indigo-200/60 shadow-sm transition-transform hover:-translate-y-0.5">
+                   <Activity size={18} className="text-indigo-600"/> Continuously Updated
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        <Card className="lg:col-span-2 p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
-            Recent Activities
-          </h3>
+      {/* LEVEL 2: AI GUIDANCE SYSTEM */}
+      <div className="grid lg:grid-cols-12 gap-[clamp(1.5rem,4vh,2rem)] mb-[clamp(2rem,5vh,3rem)]">
+        
+        {/* Left: EduTrack Signals (Insights) */}
+        <div className="lg:col-span-7 flex flex-col hover:-translate-y-1 transition-transform duration-500">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <BrainCircuit size={18} className="text-indigo-500" />
+      <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">EduTrack Signals</h3>
+          </div>
+          
+   <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-[2rem] p-[clamp(1.5rem,4vh,2.5rem)] shadow-sm relative overflow-hidden">
+             {/* Gradient top accent for AI identity */}
+             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-teal-400 opacity-60"></div>
+             
+             {aiLoading ? (
+                <div className="space-y-6 mt-2">
+         <Skeleton variant="rectangular" className="h-20 w-full" />
+         <Skeleton variant="rectangular" className="h-20 w-full" />
+                </div>
+             ) : !aiData || (!aiData.strengths?.length && !aiData.diversityAnalysis) ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-10">
+                  <BrainCircuit size={48} className="text-slate-200 mb-4" strokeWidth={1.5} />
+         <p className="text-slate-500 dark:text-slate-400 font-medium">Add and verify more achievements to unlock deep growth signals.</p>
+                </div>
+             ) : (
+               <div className="relative pl-[28px] space-y-4 mt-2">
+                  {/* Subtle connecting line */}
+         <div className="absolute left-[13px] top-4 bottom-4 w-0.5 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                  
+                  {aiData.strengths?.[0] && (
+                    <div className="relative bg-indigo-50/40 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm transition-colors hover:bg-indigo-50/70 dark:hover:bg-indigo-900/40">
+                      <div className="absolute -left-[45px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-200/60 dark:border-indigo-500/30">
+                        <Trophy size={14} strokeWidth={2.5} />
+                      </div>
+                      <h4 className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Demonstrated Strength</h4>
+           <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{aiData.strengths[0]}</p>
+                    </div>
+                  )}
+                  {aiData.diversityAnalysis && (
+                    <div className="relative bg-teal-50/40 dark:bg-teal-900/20 p-4 rounded-xl border border-teal-100/50 dark:border-teal-800/50 shadow-sm transition-colors hover:bg-teal-50/70 dark:hover:bg-teal-900/40">
+                      <div className="absolute -left-[45px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm border border-teal-200/60 dark:border-teal-500/30">
+                        <Target size={14} strokeWidth={2.5} />
+                      </div>
+                      <h4 className="text-[11px] font-black text-teal-600 dark:text-teal-400 uppercase tracking-widest mb-1">Profile Breadth</h4>
+           <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{aiData.diversityAnalysis}</p>
+                    </div>
+                  )}
+                  {aiData.weaknesses?.[0] && (
+                    <div className="relative bg-amber-50/40 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-100/50 dark:border-amber-800/50 shadow-sm transition-colors hover:bg-amber-50/70 dark:hover:bg-amber-900/40">
+                      <div className="absolute -left-[45px] top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-200/60 dark:border-amber-500/30">
+                        <BrainCircuit size={14} strokeWidth={2.5} />
+                      </div>
+                      <h4 className="text-[11px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-1">Focus Area</h4>
+           <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-snug">{aiData.weaknesses[0]}</p>
+                    </div>
+                  )}
+               </div>
+             )}
+          </div>
+        </div>
 
-          {achLoading ? (
-            <div className="text-center py-16 text-slate-400">Loading activities...</div>
-          ) : recent.length === 0 ? (
-            <div className="text-center py-16">
-              <h4 className="text-lg font-semibold text-slate-700">
-                No achievements uploaded yet
-              </h4>
-
-              <p className="text-slate-500 mt-2">
-                Upload your first certificate to begin your achievement record.
-              </p>
-
-              <Button
-                className="mt-6"
-                onClick={() => navigate('/student/add-achievement')}
-              >
-                Upload First Achievement
-              </Button>
-            </div>
-          ) : (
-            <Table columns={['Activity', 'Category', 'Date', 'Status']}>
-              {recent.map((a, i) => (
-                <Tr key={a.id} striped={i % 2 === 1}>
-                  <Td bold>{a.title}</Td>
-
-                  <Td>{a.category}</Td>
-
-                  <Td>{formatDate(a.date)}</Td>
-
-                  <Td>
-                    <span
-                      className={
-                        a.status === 'Verified'
-                          ? 'text-green-600 font-semibold'
-                          : a.status === 'Pending'
-                          ? 'text-amber-500 font-semibold'
-                          : 'text-red-600 font-semibold'
-                      }
-                    >
-                      {a.status}
-                    </span>
-                  </Td>
-                </Tr>
-              ))}
-            </Table>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-5">
-            Progress by Category
-          </h3>
-
-          {DASHBOARD_PROGRESS_BY_CATEGORY.length === 0 ? (
-            <div className="flex items-center justify-center h-64 text-slate-500 text-center">
-              Progress will appear after you upload and verify activities.
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {DASHBOARD_PROGRESS_BY_CATEGORY.map((p) => (
-                <ProgressBar key={p.label} {...p} />
-              ))}
-            </div>
-          )}
-        </Card>
+        {/* Right: Next Best Action */}
+        <div className="lg:col-span-5 flex flex-col hover:-translate-y-1 transition-transform duration-500">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Target size={18} className="text-slate-400" />
+      <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Recommended Action</h3>
+          </div>
+          
+          <div className="flex-1 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-[2rem] p-[clamp(1.75rem,4vh,2.5rem)] text-white shadow-lg relative overflow-hidden flex flex-col justify-center group">
+             {/* Radial highlight top right */}
+       <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+             
+             <div className="absolute -right-8 -bottom-8 opacity-[0.07] group-hover:opacity-10 group-hover:scale-110 transition-all duration-700 pointer-events-none">
+                <ArrowRight size={220} strokeWidth={1} />
+             </div>
+             
+             <div className="relative z-10">
+               <h4 className="text-2xl font-black mb-4 leading-tight text-white drop-shadow-sm">Next Best Step</h4>
+               <p className="text-indigo-100 text-base font-medium leading-relaxed mb-8">
+                 {aiLoading ? (
+                   <span className="animate-pulse">Determining optimal action...</span>
+                 ) : aiData?.recommendations?.[0] ? (
+                   aiData.recommendations[0]
+                 ) : (
+                   "Continue logging verified activities to unlock personalized recommendations."
+                 )}
+               </p>
+        <Button variant="secondary" onClick={() => navigate('/student/add-achievement')} className="bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 border-none hover:bg-indigo-50 dark:hover:bg-slate-800 shadow-lg shadow-indigo-900/50 w-full md:w-auto transition-transform hover:-translate-y-0.5">
+                  Take Action Now
+               </Button>
+             </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={() => navigate('/student/add-achievement')}>
-          Add Achievement
-        </Button>
+      {/* LEVEL 3: ACHIEVEMENT SNAPSHOT (BENTO) */}
+      <div className="mb-[clamp(2rem,5vh,3rem)]">
+        <div className="flex items-center gap-2 mb-4 px-1">
+          <Trophy size={18} className="text-slate-400" />
+     <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Achievement Snapshot</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Featured Metric */}
+          <div className="lg:col-span-1 bg-indigo-50/70 dark:bg-indigo-900/10 border border-indigo-100/80 dark:border-indigo-800/30 p-6 rounded-[1.5rem] flex flex-col justify-between shadow-sm relative overflow-hidden group hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+             <div className="absolute -right-4 -top-4 text-indigo-600/5 dark:text-indigo-400/5 transition-transform duration-700 group-hover:rotate-12 group-hover:scale-110">
+               <Trophy size={140} />
+             </div>
+             <div className="relative z-10">
+               <div className="flex items-center justify-between mb-4">
+                 <p className="text-sm font-bold text-indigo-800/80 dark:text-indigo-300 uppercase tracking-wider">Total Logged</p>
+         <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100/50 dark:border-indigo-800/50">
+                   <Trophy size={18} />
+                 </div>
+               </div>
+                <p className="text-[clamp(2.5rem,4vw,3rem)] font-black leading-none text-indigo-950 dark:text-white">
+                  {summaryLoading ? <Skeleton variant="text" className="w-16 h-10 mt-1" /> : summary.total}
+                </p>
+             </div>
+          </div>
+          
+          {/* Supporting Metrics */}
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+             <div className="bg-teal-50/40 dark:bg-teal-900/10 border border-teal-100/60 dark:border-teal-800/30 p-6 rounded-[1.5rem] flex flex-col justify-between hover:bg-teal-50/60 dark:hover:bg-teal-900/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+               <div className="flex items-center justify-between mb-4">
+                 <span className="text-sm font-bold text-teal-800/80 dark:text-teal-300 uppercase tracking-wider">Verified</span>
+         <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm border border-teal-100/50 dark:border-teal-800/50">
+                   <BadgeCheck size={18} />
+                 </div>
+               </div>
+                <p className="text-4xl font-black text-teal-950 dark:text-white">
+                  {summaryLoading ? <Skeleton variant="text" className="w-12 h-10 mt-1" /> : summary.verified}
+                </p>
+             </div>
+             
+             <div className="bg-amber-50/40 dark:bg-amber-900/10 border border-amber-100/60 dark:border-amber-800/30 p-6 rounded-[1.5rem] flex flex-col justify-between hover:bg-amber-50/60 dark:hover:bg-amber-900/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+               <div className="flex items-center justify-between mb-4">
+                 <span className="text-sm font-bold text-amber-800/80 dark:text-amber-300 uppercase tracking-wider">Pending</span>
+         <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-100/50 dark:border-amber-800/50">
+                   <Clock3 size={18} />
+                 </div>
+               </div>
+                <p className="text-4xl font-black text-amber-950 dark:text-white">
+                  {summaryLoading ? <Skeleton variant="text" className="w-12 h-10 mt-1" /> : summary.pending}
+                </p>
+             </div>
+             
+             <div className="bg-rose-50/40 dark:bg-rose-900/10 border border-rose-100/60 dark:border-rose-800/30 p-6 rounded-[1.5rem] flex flex-col justify-between hover:bg-rose-50/60 dark:hover:bg-rose-900/20 hover:-translate-y-1 hover:shadow-md transition-all duration-300">
+               <div className="flex items-center justify-between mb-4">
+                 <span className="text-sm font-bold text-rose-800/80 dark:text-rose-300 uppercase tracking-wider">Rejected</span>
+         <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-rose-600 dark:text-rose-400 shadow-sm border border-rose-100/50 dark:border-rose-800/50">
+                   <CircleX size={18} />
+                 </div>
+               </div>
+                <p className="text-4xl font-black text-rose-950 dark:text-white">
+                  {summaryLoading ? <Skeleton variant="text" className="w-12 h-10 mt-1" /> : summary.rejected}
+                </p>
+             </div>
+          </div>
+        </div>
+      </div>
 
-        <Button
-          variant="secondary"
-          onClick={() => navigate('/student/my-activities')}
-        >
-          View My Activities
-        </Button>
+      {/* LEVEL 4: SUPPORTING ANALYTICS */}
+      <div className="grid lg:grid-cols-2 gap-[clamp(1.5rem,4vh,2rem)]">
+        
+        {/* SKILLS */}
+        <div className="hover:-translate-y-1 transition-transform duration-500">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Target size={18} className="text-slate-400" />
+      <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Skill Distribution</h3>
+          </div>
+   <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-[2rem] p-[clamp(1.5rem,4vh,2.5rem)] shadow-sm min-h-[300px]">
+            {aiLoading ? (
+              <div className="space-y-6 pt-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className="group">
+                    <div className="flex justify-between items-end mb-2">
+                      <Skeleton variant="text" className="w-24" />
+                      <Skeleton variant="rectangular" className="w-8 h-5" />
+                    </div>
+                    <Skeleton variant="rectangular" className="h-3 w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : !aiData || !aiData.categoryScores || Object.keys(aiData.categoryScores).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-10">
+                <Info size={40} className="text-slate-200 mb-4" strokeWidth={1.5} />
+        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Your skill matrix requires more verified data.</p>
+              </div>
+            ) : (
+              <div className="space-y-6 pt-2">
+                {Object.entries(aiData.categoryScores).map(([cat, score], index) => {
+                  // Cycle through a few subtle gradient combinations based on index
+                  const gradient = index % 2 === 0 
+                    ? 'from-indigo-500 to-sky-400'
+                    : 'from-indigo-500 to-teal-400';
+                    
+                  return (
+                    <div key={cat} className="group">
+                      <div className="flex justify-between items-end mb-2">
+            <span className="font-bold text-slate-700 dark:text-slate-300 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{cat}</span>
+      <div className="px-2 py-0.5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm">
+                          <span className="font-black text-indigo-700 dark:text-indigo-400 text-xs">{score}%</span>
+                        </div>
+                      </div>
+           <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
+                        <div 
+                          className={`h-full bg-gradient-to-r ${gradient} rounded-full relative transition-all duration-1000 ease-out`}
+                          style={{ width: `${score}%` }}
+                        >
+             <div className="absolute inset-0 bg-white/20"></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TIMELINE */}
+        <div className="hover:-translate-y-1 transition-transform duration-500">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Clock3 size={18} className="text-slate-400" />
+      <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Activity Journey</h3>
+          </div>
+   <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-[2rem] p-[clamp(1.5rem,4vh,2.5rem)] shadow-sm min-h-[300px]">
+            {achLoading ? (
+              <div className="space-y-6 pt-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex gap-4">
+                    <Skeleton variant="circular" className="w-4 h-4 shrink-0 mt-1" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton variant="text" className="w-16" />
+                      <Skeleton variant="text" className="w-3/4" />
+                      <Skeleton variant="text" className="w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recent.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center py-10">
+        <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mb-5">No activities logged yet.</p>
+                <Button variant="secondary" onClick={() => navigate('/student/add-achievement')}>Start Your Journey</Button>
+              </div>
+            ) : (
+              <div className="relative pl-[28px] mt-2">
+                {/* Subtle vertical gradient spine */}
+                <div className="absolute left-[13px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-500 via-violet-300 to-transparent rounded-full"></div>
+                
+                <div className="space-y-6">
+                  {recent.map((a, i) => (
+                    <div key={a.id} className="relative group">
+                      {/* Spine Node - State Aware */}
+           <div className={`absolute -left-[35px] top-4 w-4 h-4 rounded-full border-[3px] bg-white dark:bg-slate-900 transition-colors duration-300 shadow-sm z-10 ${
+                        a.status === 'Verified' ? 'border-teal-500' : 
+                        a.status === 'Rejected' ? 'border-rose-500' : 'border-amber-500'
+                      }`}></div>
+                      
+    <div className="flex items-start justify-between bg-white dark:bg-slate-900 p-3 rounded-xl border border-transparent group-hover:border-slate-100 dark:group-hover:border-slate-800 group-hover:shadow-sm transition-all duration-300 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 cursor-default">
+                        <div>
+                           <div className="text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-wider">{formatDate(a.date)}</div>
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm mb-0.5 group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors">{a.title}</h4>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 ">{a.category}</p>
+                        </div>
+                        <div className="shrink-0 pl-3 pt-1">
+                          <Badge status={a.status} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )

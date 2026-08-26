@@ -11,6 +11,8 @@ public interface ActivityRepository extends MongoRepository<Activity, String> {
 
     List<Activity> findByStudentId(String studentId);
 
+    boolean existsByStudentIdAndTitleAndCategory(String studentId, String title, String category);
+
     List<Activity> findByStudentIdAndStatus(String studentId, ActivityStatus status);
 
     List<Activity> findByStatus(ActivityStatus status);

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.edutrack.activityservice.domain.Activity;
+import com.edutrack.activityservice.domain.ActivityEvent;
 import com.edutrack.activityservice.domain.ActivityStatus;
 import com.edutrack.activityservice.dto.request.CreateActivityRequest;
 import com.edutrack.activityservice.dto.request.RejectActivityRequest;
@@ -31,6 +32,10 @@ public class ActivityService {
 
     /** Creates a new submission. studentId/name/email come from the token, never the request body. */
     public Activity create(CreateActivityRequest request, AuthenticatedUser student) {
+        if (activityRepository.existsByStudentIdAndTitleAndCategory(student.id(), request.title(), request.category())) {
+            throw new InvalidActivityStateException("You have already submitted an activity with this title and category.");
+        }
+
         Activity activity = Activity.builder()
                 .studentId(student.id())
                 .studentName(student.fullName())
@@ -42,6 +47,13 @@ public class ActivityService {
                 .certificateReference(request.certificateReference())
                 .status(ActivityStatus.PENDING)
                 .build();
+
+        activity.getHistory().add(ActivityEvent.builder()
+                .action("SUBMITTED")
+                .actorName(student.fullName())
+                .actorRole("STUDENT")
+                .remarks("Initial submission")
+                .build());
 
         return activityRepository.save(activity);
     }
@@ -72,9 +84,8 @@ public class ActivityService {
         Activity activity = findById(id);
         requireOwner(activity, student);
 
-        if (activity.getStatus() != ActivityStatus.PENDING) {
-            throw new InvalidActivityStateException(
-                    "Only PENDING activities can be edited; this one is " + activity.getStatus());
+        if (activity.getStatus() == ActivityStatus.VERIFIED) {
+            throw new InvalidActivityStateException("VERIFIED activities cannot be edited.");
         }
 
         activity.setTitle(request.title());
@@ -82,6 +93,27 @@ public class ActivityService {
         activity.setActivityDate(request.activityDate());
         activity.setDescription(request.description());
         activity.setCertificateReference(request.certificateReference());
+
+        // If it was rejected, resubmit it back to pending queue
+        if (activity.getStatus() == ActivityStatus.REJECTED) {
+            activity.setStatus(ActivityStatus.PENDING);
+            activity.setRemarks(null);
+            activity.setVerifierId(null);
+            activity.setVerifierName(null);
+            
+            activity.getHistory().add(ActivityEvent.builder()
+                    .action("RESUBMITTED")
+                    .actorName(student.fullName())
+                    .actorRole("STUDENT")
+                    .remarks("Resubmitted after rejection")
+                    .build());
+        } else {
+            activity.getHistory().add(ActivityEvent.builder()
+                    .action("UPDATED")
+                    .actorName(student.fullName())
+                    .actorRole("STUDENT")
+                    .build());
+        }
 
         return activityRepository.save(activity);
     }
@@ -124,6 +156,13 @@ public class ActivityService {
         activity.setVerifierId(faculty.id());
         activity.setVerifierName(faculty.fullName());
         activity.setRemarks(null);
+        
+        activity.getHistory().add(ActivityEvent.builder()
+                .action("VERIFIED")
+                .actorName(faculty.fullName())
+                .actorRole(faculty.role())
+                .build());
+                
         return activityRepository.save(activity);
     }
 
@@ -133,6 +172,14 @@ public class ActivityService {
         activity.setVerifierId(faculty.id());
         activity.setVerifierName(faculty.fullName());
         activity.setRemarks(request.remarks());
+        
+        activity.getHistory().add(ActivityEvent.builder()
+                .action("REJECTED")
+                .actorName(faculty.fullName())
+                .actorRole(faculty.role())
+                .remarks(request.remarks())
+                .build());
+                
         return activityRepository.save(activity);
     }
 

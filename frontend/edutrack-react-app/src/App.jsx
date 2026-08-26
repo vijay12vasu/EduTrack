@@ -86,15 +86,22 @@ function AppRoutes() {
   )
 }
 
+import { WorkspacePreferencesProvider } from './context/WorkspacePreferencesContext'
+import { ToastProvider } from './context/ToastContext'
+
 export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <AuthProvider>
-          <AchievementProvider>
-            <AppRoutes />
-          </AchievementProvider>
-        </AuthProvider>
+        <WorkspacePreferencesProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <AchievementProvider>
+                <AppRoutes />
+              </AchievementProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </WorkspacePreferencesProvider>
       </BrowserRouter>
     </ErrorBoundary>
   )

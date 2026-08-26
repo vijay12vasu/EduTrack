@@ -22,7 +22,8 @@ export function AchievementProvider({ children }) {
     verifierName: d.verifierName,
     remarks: d.remarks,
     createdAt: d.createdAt,
-    updatedAt: d.updatedAt
+    updatedAt: d.updatedAt,
+    history: d.history || []
   })
 
   const fetchAchievements = useCallback(async () => {
@@ -121,6 +122,33 @@ export function AchievementProvider({ children }) {
     return newAct
   }
 
+  const updateAchievement = async (id, achievement) => {
+    if (!token) throw new Error('Not authenticated')
+
+    const res = await fetch(`/api/activities/${id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: achievement.title,
+        category: achievement.category,
+        activityDate: achievement.date || new Date().toISOString().split('T')[0],
+        description: achievement.description,
+        certificateReference: achievement.certificate
+      })
+    })
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null)
+      throw new Error(errorData?.message || `Failed to update activity (${res.status})`)
+    }
+
+    await fetchAchievements() // refresh entirely
+    return await res.json()
+  }
+
   const uploadFile = async (file) => {
     if (!token) return null
 
@@ -155,14 +183,19 @@ export function AchievementProvider({ children }) {
     if (!token) return
 
     const endpoint = status === 'Verified' ? 'approve' : 'reject'
-    const res = await fetch(`/api/activities/verification/${id}/${endpoint}`, {
+    const options = {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ remarks: remarks || 'Faculty review' })
-    })
+      }
+    }
+    
+    if (endpoint === 'reject') {
+      options.body = JSON.stringify({ remarks: remarks || 'Faculty review' })
+    }
+
+    const res = await fetch(`/api/activities/verification/${id}/${endpoint}`, options)
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => null)
@@ -201,6 +234,7 @@ export function AchievementProvider({ children }) {
         achievements,
         loading,
         addAchievement,
+        updateAchievement,
         uploadFile,
         updateAchievementStatus,
         deleteAchievement,

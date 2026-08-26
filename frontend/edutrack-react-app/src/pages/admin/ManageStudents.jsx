@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
+import { Users, UserPlus } from 'lucide-react'
 import DashboardLayout from '../../layouts/DashboardLayout'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
-import { Input } from '../../components/ui/Input'
+import { Input, Select } from '../../components/ui/Input'
 import Table, { Tr, Td } from '../../components/ui/Table'
+import EmptyState from '../../components/ui/EmptyState'
+import Badge from '../../components/ui/Badge'
+import Skeleton from '../../components/ui/Skeleton'
 import { useAuth } from '../../context/AuthContext'
-import { ChevronDown } from 'lucide-react'
-
+import { useToast } from '../../context/ToastContext'
 import { useNavigate } from 'react-router-dom'
 
 const ROLES = ['STUDENT', 'FACULTY', 'ADMIN', 'EMPLOYER']
@@ -18,8 +21,9 @@ export default function ManageStudents() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('ALL')
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const { token } = useAuth()
+  const { addToast } = useToast()
   
   // Registration form
   const [open, setOpen] = useState(false)
@@ -78,131 +82,157 @@ export default function ManageStudents() {
 
       setOpen(false)
       setForm({ fullName: '', email: '', password: '', role: 'STUDENT', registerNumber: '', department: '', year: '', mobile: '' })
-      fetchUsers() // Refresh list
+      addToast('User provisioned successfully', 'success')
+      fetchUsers()
     } catch (err) {
-      setRegError(err.message)
+      addToast(err.message, 'error')
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const filteredUsers = users.filter(u => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (u.fullName?.toLowerCase() || '').includes(q) || (u.email?.toLowerCase() || '').includes(q)
+  })
+
   return (
     <DashboardLayout
-      title="Manage Users"
-      subtitle="Create and view platform users"
+      title="User Management"
+      subtitle="View, manage, and provision accounts across the EduTrack system."
       action={
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm font-semibold text-slate-900 hover:bg-slate-50"
-            >
-              Role: {filter}
-              <ChevronDown size={16} className="text-slate-400" />
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg border border-slate-100 shadow-card overflow-hidden z-10">
-                {['ALL', ...ROLES].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => {
-                      setFilter(f)
-                      setMenuOpen(false)
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <Button onClick={() => setOpen(true)}>Add User</Button>
+        <div className="flex items-center gap-4">
+          <Input 
+            placeholder="Search users..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-48 lg:w-64 bg-white dark:bg-slate-900"
+          />
+          <Select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+   className="w-32 lg:w-40 py-2.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 "
+          >
+            <option value="ALL">All Roles</option>
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </Select>
+          <Button onClick={() => setOpen(true)}>
+            <UserPlus size={18} />
+            Add User
+          </Button>
         </div>
       }
     >
       {error && (
-        <div className="mb-4 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+        <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm font-semibold text-rose-700 shadow-sm">
           {error}
         </div>
       )}
 
-      <Card className="p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-4">User List</h3>
+   <Card className="p-0 overflow-hidden border-slate-200/60 shadow-sm">
+  <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+     <h3 className="text-lg font-bold text-slate-900 dark:text-white ">Registered Users</h3>
+     <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 ">{users.length} total</span>
+        </div>
+
         {loading ? (
-          <div className="text-center py-10 text-slate-400">Loading users...</div>
-        ) : (
-          <Table columns={['Name', 'Email', 'Role', 'Action']}>
-            {users.map((s, i) => (
-              <Tr key={s.id} striped={i % 2 === 1}>
-                <Td bold>{s.fullName}</Td>
-                <Td>{s.email}</Td>
-                <Td>
-                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-semibold">
-                    {s.role}
-                  </span>
-                </Td>
-                <Td>
-                  <button 
-                    onClick={() => navigate(`/admin/users/${s.id}`)}
-                    className="text-blue-600 hover:underline font-medium text-sm"
-                  >
-                    View
-                  </button>
-                </Td>
-              </Tr>
+          <div className="p-6 space-y-4">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton variant="circular" className="w-9 h-9 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton variant="text" className="w-1/4 h-3" />
+                  <Skeleton variant="text" className="w-1/3 h-3" />
+                </div>
+                <Skeleton variant="rectangular" className="w-20 h-6" />
+              </div>
             ))}
-            {users.length === 0 && !error && (
-              <Tr>
-                <Td colSpan={4} className="text-center py-10 text-slate-400">No users found.</Td>
-              </Tr>
-            )}
-          </Table>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="p-6">
+            <EmptyState icon={Users} title="No users found" message={searchQuery ? `No users matching "${searchQuery}"` : `There are no users matching the ${filter} role filter.`} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table columns={['User', 'Role', 'System Status', 'Action']}>
+              {filteredUsers.map((s, i) => (
+      <Tr key={s.id} striped={i % 2 === 1} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-900/50 transition-colors">
+                  <Td bold>
+                    <div className="flex items-center gap-3">
+       <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center font-bold text-sm shrink-0">
+                        {(s.fullName || 'U').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+             <p className="font-bold text-slate-900 dark:text-white truncate">{s.fullName}</p>
+             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{s.email}</p>
+                      </div>
+                    </div>
+                  </Td>
+                  <Td>
+       <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold tracking-wide">
+                      {s.role}
+                    </span>
+                  </Td>
+                  <Td>
+                    <Badge status="Active" />
+                  </Td>
+                  <Td>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => navigate(`/admin/users/${s.id}`)}
+                      className="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                    >
+                      Manage Profile
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Table>
+          </div>
         )}
       </Card>
 
       <Modal open={open} onClose={() => setOpen(false)}>
-        <h3 className="text-xl font-bold text-slate-900 mb-5">Add New User</h3>
+        <div className="mb-6">
+     <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Provision User</h3>
+     <p className="text-sm text-slate-500 dark:text-slate-400 ">Create a new institutional account.</p>
+        </div>
         
-        {regError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-            {regError}
-          </div>
-        )}
+        {/* removed inline regError since we use toast */}
         
         <form onSubmit={addUser} className="space-y-4">
-          <Input label="Full Name" value={form.fullName} onChange={set('fullName')} required />
-          <Input label="Email" type="email" value={form.email} onChange={set('email')} required />
-          <Input label="Password" type="password" value={form.password} onChange={set('password')} required minLength={8} />
-          
-          <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-1.5">Role</label>
-            <select
-              value={form.role}
-              onChange={set('role')}
-              className="w-full rounded-lg border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all border"
-            >
-              {ROLES.map(r => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+          <div className="grid md:grid-cols-2 gap-4">
+            <Input label="Full Name" value={form.fullName} onChange={set('fullName')} required />
+            <Select label="System Role" value={form.role} onChange={set('role')}>
+              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+            </Select>
           </div>
+          
+          <Input label="Email Address" type="email" value={form.email} onChange={set('email')} required />
+          <Input label="Temporary Password" type="password" value={form.password} onChange={set('password')} required minLength={8} />
 
           {form.role === 'STUDENT' && (
-            <>
-              <Input label="Register Number" value={form.registerNumber} onChange={set('registerNumber')} required />
-              <Input label="Department" value={form.department} onChange={set('department')} required />
-              <Input label="Year" value={form.year} onChange={set('year')} required placeholder="e.g. 1st Year, 2nd Year" />
-              <Input label="Mobile (Optional)" type="tel" value={form.mobile} onChange={set('mobile')} />
-            </>
+   <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 space-y-4 mt-2">
+       <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 ">Student Details</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Input label="Register Number" value={form.registerNumber} onChange={set('registerNumber')} required />
+                <Input label="Department" value={form.department} onChange={set('department')} required />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Input label="Year" value={form.year} onChange={set('year')} required placeholder="e.g. 1st Year" />
+                <Input label="Mobile (Optional)" type="tel" value={form.mobile} onChange={set('mobile')} />
+              </div>
+            </div>
           )}
 
-          <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" className="flex-1" onClick={() => setOpen(false)}>
+     <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 mt-6">
+            <Button type="button" variant="ghost" className="flex-1" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" className="flex-1" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create User'}
+              {isSubmitting ? 'Provisioning...' : 'Create Account'}
             </Button>
           </div>
         </form>

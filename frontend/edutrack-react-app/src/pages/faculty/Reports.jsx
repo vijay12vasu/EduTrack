@@ -54,7 +54,7 @@ export default function FacultyReports() {
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
         <Card className="p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-5">Verification Summary</h3>
+     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-5">Verification Summary</h3>
           <div className="space-y-5">
             {DEPARTMENT_VERIFICATION_SUMMARY.map((p) => (
               <ProgressBar key={p.label} {...p} />
@@ -63,8 +63,8 @@ export default function FacultyReports() {
         </Card>
 
         <Card className="p-6 flex flex-col justify-center items-center gap-4">
-          <h3 className="text-lg font-bold text-slate-900 w-full text-left">Generate Report</h3>
-          <p className="text-sm text-slate-500 text-left w-full">
+     <h3 className="text-lg font-bold text-slate-900 dark:text-white w-full text-left">Generate Report</h3>
+     <p className="text-sm text-slate-500 dark:text-slate-400 text-left w-full">
             Download a PDF report of all your verified student activities.
           </p>
           <Button onClick={handleGenerate} disabled={loading} className="w-full">

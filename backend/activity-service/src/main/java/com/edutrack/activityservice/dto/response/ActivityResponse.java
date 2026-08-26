@@ -21,7 +21,8 @@ public record ActivityResponse(
         String verifierName,
         String remarks,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        java.util.List<com.edutrack.activityservice.domain.ActivityEvent> history
 ) {
     public static ActivityResponse from(Activity activity) {
         return new ActivityResponse(
@@ -39,7 +40,8 @@ public record ActivityResponse(
                 activity.getVerifierName(),
                 activity.getRemarks(),
                 activity.getCreatedAt(),
-                activity.getUpdatedAt()
+                activity.getUpdatedAt(),
+                activity.getHistory()
         );
     }
 }

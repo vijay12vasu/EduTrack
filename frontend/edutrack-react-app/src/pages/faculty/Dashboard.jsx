@@ -1,29 +1,41 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FileSearch, Clock, ShieldCheck, Users, AlertTriangle, History } from 'lucide-react'
 import DashboardLayout from '../../layouts/DashboardLayout'
 import Card from '../../components/ui/Card'
-import StatCard from '../../components/ui/StatCard'
 import Button from '../../components/ui/Button'
 import Table, { Tr, Td } from '../../components/ui/Table'
 import ProgressBar from '../../components/ui/ProgressBar'
+import Badge from '../../components/ui/Badge'
+import EmptyState from '../../components/ui/EmptyState'
+import Skeleton from '../../components/ui/Skeleton'
 import { useAchievements } from '../../context/AchievementContext'
 import { useAuth } from '../../context/AuthContext'
 
 function formatDate(date) {
   const parsed = new Date(date)
   if (isNaN(parsed.getTime())) return date
+  return parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
-  return parsed.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
+function MetricBox({ title, value, icon: Icon, colorClass, bgClass }) {
+  return (
+    <div className={`p-5 rounded-2xl border ${bgClass} flex items-center justify-between`}>
+      <div>
+    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">{title}</p>
+    <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
+      </div>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass}`}>
+        <Icon strokeWidth={2} />
+      </div>
+    </div>
+  )
 }
 
 export default function FacultyDashboard() {
   const navigate = useNavigate()
   const { achievements } = useAchievements()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   
   const [students, setStudents] = useState([])
   const [loadingStudents, setLoadingStudents] = useState(true)
@@ -40,157 +52,193 @@ export default function FacultyDashboard() {
   const pending = achievements.filter((a) => a.status === 'Pending')
   const verified = achievements.filter((a) => a.status === 'Verified')
   const rejected = achievements.filter((a) => a.status === 'Rejected')
-
   const totalReviewed = verified.length + rejected.length
 
   const VERIFICATION_SUMMARY = [
-    { label: 'Total Reviewed', value: totalReviewed > 0 ? 100 : 0, color: 'bg-blue-500' },
-    { label: 'Approved', value: totalReviewed > 0 ? Math.round((verified.length / totalReviewed) * 100) : 0, color: 'bg-green-500' },
-    { label: 'Rejected', value: totalReviewed > 0 ? Math.round((rejected.length / totalReviewed) * 100) : 0, color: 'bg-red-500' },
+    { label: 'Total Reviewed', value: totalReviewed > 0 ? 100 : 0, color: 'bg-indigo-500' },
+    { label: 'Approved', value: totalReviewed > 0 ? Math.round((verified.length / totalReviewed) * 100) : 0, color: 'bg-teal-500' },
+    { label: 'Rejected', value: totalReviewed > 0 ? Math.round((rejected.length / totalReviewed) * 100) : 0, color: 'bg-rose-500' },
   ]
+
+  let oldestPendingDays = 0
+  let resubmittedCount = 0
+  if (pending.length > 0) {
+    const oldest = pending.reduce((old, a) => new Date(old.createdAt) < new Date(a.createdAt) ? old : a)
+    oldestPendingDays = Math.floor((new Date() - new Date(oldest.createdAt)) / (1000 * 60 * 60 * 24))
+    
+    resubmittedCount = pending.filter(a => a.history && a.history.some(h => h.action === 'RESUBMITTED')).length
+  }
 
   return (
     <DashboardLayout
-      title="Faculty Dashboard"
-      subtitle="Review and manage student achievement submissions"
+      title="Review Workspace"
+      subtitle={`Welcome back, ${user?.fullName?.split(' ')[0] || 'Faculty'}. Here is your verification queue.`}
+      action={
+        <Button onClick={() => navigate('/faculty/pending-verification')}>
+          Open Full Queue
+        </Button>
+      }
     >
-      <div className="grid md:grid-cols-4 gap-6 mb-6">
-        <StatCard
-          label="Total Students"
-          value={loadingStudents ? '—' : students.length}
-          icon="S"
-          color="indigo"
+      {/* Concise Workload Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <MetricBox 
+          title="Action Required" 
+          value={pending.length} 
+          icon={Clock} 
+          bgClass="bg-amber-50/40 dark:bg-amber-500/10 border-amber-100/60 dark:border-amber-500/20" 
+          colorClass="bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400" 
         />
-        <StatCard
-          label="Pending Verification"
-          value={pending.length}
-          icon="P"
-          color="amber"
+        <MetricBox 
+          title="Verified" 
+          value={verified.length} 
+          icon={ShieldCheck} 
+          bgClass="bg-teal-50/40 dark:bg-teal-500/10 border-teal-100/60 dark:border-teal-500/20" 
+          colorClass="bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400" 
         />
-        <StatCard
-          label="Verified"
-          value={verified.length}
-          icon="V"
-          color="green"
+        <MetricBox 
+          title="Total Reviewed" 
+          value={totalReviewed} 
+          icon={FileSearch} 
+          bgClass="bg-indigo-50/40 dark:bg-indigo-500/10 border-indigo-100/60 dark:border-indigo-500/20" 
+          colorClass="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400" 
         />
-        <StatCard
-          label="Total Reviewed"
-          value={totalReviewed}
-          icon="T"
-          color="blue"
+        <MetricBox 
+          title="My Students" 
+          value={loadingStudents ? '—' : students.length} 
+          icon={Users} 
+   bgClass="bg-white dark:bg-slate-900 border-slate-200/60 shadow-sm" 
+   colorClass="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 " 
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
-        <Card className="p-6 lg:col-span-2">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
-            Students / Users
-          </h3>
-
-          {loadingStudents ? (
-            <div className="text-center py-16 text-slate-400">Loading students...</div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-16">
-              <h4 className="text-lg font-semibold text-slate-700">No students found</h4>
-              <p className="text-slate-500 mt-2">No students are currently registered in the system.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-slate-500 border-y border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Student Name</th>
-                    <th className="px-4 py-3 font-semibold">Email</th>
-                    <th className="px-4 py-3 font-semibold text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {students.map((student) => (
-                    <tr 
-                      key={student.id} 
-                      className="hover:bg-slate-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/faculty/students/${student.id}`)}
-                    >
-                      <td className="px-4 py-4 font-semibold text-slate-900">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                            {student.fullName ? student.fullName.charAt(0).toUpperCase() : 'S'}
-                          </div>
-                          {student.fullName}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">{student.email}</td>
-                      <td className="px-4 py-4 text-right">
-                        <span className="text-blue-600 font-medium hover:underline">View Profile →</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-5">
-            Verification Summary
-          </h3>
-
-          {totalReviewed === 0 ? (
-            <div className="flex items-center justify-center h-48 text-slate-500 text-center text-sm">
-              No verification data yet
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {VERIFICATION_SUMMARY.map((p) => (
-                <ProgressBar key={p.label} {...p} />
-              ))}
-            </div>
-          )}
-        </Card>
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <MetricBox 
+          title="Oldest Pending" 
+          value={oldestPendingDays > 0 ? `${oldestPendingDays} days` : '0 days'} 
+          icon={AlertTriangle} 
+          bgClass="bg-white dark:bg-slate-900 border-slate-200/60 shadow-sm" 
+          colorClass="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" 
+        />
+        <MetricBox 
+          title="Resubmitted Pending Review" 
+          value={resubmittedCount} 
+          icon={History} 
+          bgClass="bg-white dark:bg-slate-900 border-slate-200/60 shadow-sm" 
+          colorClass="bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400" 
+        />
       </div>
 
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-900">
-            Pending Submissions
-          </h3>
-          <span className="text-sm font-semibold text-amber-500">
-            {pending.length} pending
-          </span>
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* PRIMARY FOCAL AREA: Verification Queue */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+      <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Priority Queue</h3>
+            {pending.length > 0 && (
+              <span className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold shadow-sm">
+                {pending.length} pending
+              </span>
+            )}
+          </div>
+          
+          <div className="bg-indigo-50/30 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100/60 dark:border-indigo-800/30 p-2 shadow-sm">
+            {pending.length === 0 ? (
+              <EmptyState 
+                icon={ShieldCheck} 
+                title="All caught up!" 
+                message="There are no pending submissions requiring your verification."
+              />
+            ) : (
+              <Table columns={['Student / Activity', 'Category', 'Date', 'Status', 'Action']}>
+                {pending.slice(0, 5).map((achievement) => (
+         <Tr key={achievement.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <Td>
+           <div className="font-bold text-slate-900 dark:text-white mb-0.5">{achievement.activity || achievement.title}</div>
+           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{achievement.studentName || achievement.studentEmail || 'Unknown Student'}</div>
+                    </Td>
+          <Td><span className="text-slate-700 dark:text-slate-300 font-medium">{achievement.category}</span></Td>
+          <Td><span className="text-slate-600 dark:text-slate-400 ">{formatDate(achievement.date)}</span></Td>
+                    <Td><Badge status={achievement.status} /></Td>
+                    <Td>
+                      <Button variant="ghost" size="sm" onClick={() => navigate('/faculty/pending-verification')}>
+                        Review →
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Table>
+            )}
+          </div>
+          {pending.length > 5 && (
+            <div className="text-center">
+              <Button variant="link" onClick={() => navigate('/faculty/pending-verification')}>
+                View all {pending.length} pending submissions
+              </Button>
+            </div>
+          )}
         </div>
 
-        {pending.length === 0 ? (
-          <div className="text-center py-16">
-            <h4 className="text-lg font-semibold text-slate-700">
-              No pending verifications
-            </h4>
-            <p className="text-slate-500 mt-2">
-              Student achievement requests will appear here for verification.
-            </p>
-          </div>
-        ) : (
-          <Table columns={['Activity', 'Category', 'Date', 'Status']}>
-            {pending.map((achievement, index) => (
-              <Tr
-                key={achievement.id}
-                striped={index % 2 === 1}
-              >
-                <Td bold>
-                  {achievement.activity || achievement.title}
-                </Td>
-                <Td>{achievement.category}</Td>
-                <Td>{formatDate(achievement.date)}</Td>
-                <Td>
-                  <span className="text-amber-500 font-semibold">
-                    {achievement.status}
-                  </span>
-                </Td>
-              </Tr>
-            ))}
-          </Table>
-        )}
-      </Card>
+        {/* SUPPORTING AREAS */}
+        <div className="space-y-8">
+     <Card className="p-6 border-slate-200/60 shadow-sm">
+      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-6">Verification Insights</h3>
+            {totalReviewed === 0 ? (
+       <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                No verification data yet.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {VERIFICATION_SUMMARY.map((p) => (
+                  <ProgressBar key={p.label} {...p} />
+                ))}
+              </div>
+            )}
+          </Card>
+
+     <Card className="p-6 border-slate-200/60 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+       <h3 className="text-base font-bold text-slate-900 dark:text-white ">Assigned Students</h3>
+              <Button variant="link" size="sm" onClick={() => navigate('/faculty/students')}>View All</Button>
+            </div>
+
+            {loadingStudents ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => (
+                  <div key={i} className="flex items-center gap-3 p-3">
+                    <Skeleton variant="circular" className="w-10 h-10 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton variant="text" className="w-3/4" />
+                      <Skeleton variant="text" className="w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : students.length === 0 ? (
+       <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm font-medium">No assigned students.</div>
+            ) : (
+              <div className="space-y-3">
+                {students.slice(0, 4).map((student) => (
+                  <div 
+                    key={student.id} 
+                    onClick={() => navigate(`/faculty/students/${student.id}`)}
+   className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 dark:bg-slate-900/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all cursor-pointer group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                      {student.fullName ? student.fullName.charAt(0).toUpperCase() : 'S'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{student.fullName}</p>
+           <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{student.email}</p>
+                    </div>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500 dark:text-indigo-400 shrink-0">
+                      →
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
     </DashboardLayout>
   )
 }

@@ -2,6 +2,7 @@ package com.edutrack.activityservice.controller;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.edutrack.activityservice.domain.ActivityStatus;
 import com.edutrack.activityservice.dto.response.ActivityResponse;
 import com.edutrack.activityservice.dto.response.ActivitySummaryResponse;
+import com.edutrack.activityservice.dto.response.PublicActivityResponse;
 import com.edutrack.activityservice.service.ActivityService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,14 +35,20 @@ public class AdminActivityController {
 
     @GetMapping
     @Operation(summary = "List all activity records, optionally filtered by status/category/studentId")
-    public List<ActivityResponse> findAll(@RequestParam(required = false) ActivityStatus status,
+    public ResponseEntity<?> findAll(@RequestParam(required = false) ActivityStatus status,
                                            @RequestParam(required = false) String category,
                                            @RequestParam(required = false) String studentId,
                                            @AuthenticationPrincipal AuthenticatedUser user) {
         if ("EMPLOYER".equals(user.role())) {
             status = ActivityStatus.VERIFIED;
+            List<PublicActivityResponse> res = activityService.findAll(status, category, studentId).stream()
+                .map(PublicActivityResponse::from).toList();
+            return ResponseEntity.ok(res);
         }
-        return activityService.findAll(status, category, studentId).stream().map(ActivityResponse::from).toList();
+        
+        List<ActivityResponse> res = activityService.findAll(status, category, studentId).stream()
+            .map(ActivityResponse::from).toList();
+        return ResponseEntity.ok(res);
     }
 
     @GetMapping("/summary")
