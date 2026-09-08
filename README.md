@@ -103,4 +103,10 @@ To safely shut down the services without killing your database, run `stop-edutra
 
 ## Screenshots
 <img width="1917" height="1052" alt="Screenshot 2026-08-31 100055" src="https://github.com/user-attachments/assets/bb87b93b-72ae-4f4e-8e35-1f3d56e015c2" />
+<img width="1917" height="1047" alt="Screenshot 2026-08-31 100128" src="https://github.com/user-attachments/assets/bfb13429-7c71-4807-b12e-6dc522597f22" />
+<img width="1917" height="1052" alt="Screenshot 2026-08-31 100236" src="https://github.com/user-attachments/assets/ba034202-56fb-44a8-96cd-03ba0448341a" />
+<img width="1917" height="1048" alt="Screenshot 2026-08-31 100512" src="https://github.com/user-attachments/assets/3afa4243-b298-4882-93bb-b9f87d300902" />
+<img width="1917" height="1047" alt="Screenshot 2026-08-31 100647" src="https://github.com/user-attachments/assets/07a1f37e-3817-4a31-8834-290fd8b8358a" />
+<img width="1917" height="1045" alt="Screenshot 2026-08-31 100834" src="https://github.com/user-attachments/assets/dc20c96c-2cf9-4e35-afb3-5e65797b5d75" />
+
 
